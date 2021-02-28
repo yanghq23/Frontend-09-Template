@@ -39,6 +39,7 @@
     <button id="manul" onclick="manualGo()">manual go</button>
     <button id="next">next</button>
     <script>
+        // 通过class改变状态
         function changeStatus(name) {
             var lights = document.getElementsByTagName('div');
 
@@ -47,18 +48,19 @@
 
             document.getElementsByClassName(name)[0]?.classList.add('light')
         }
-
+        // Promise间隔时间
         function sleep(t) {
             return new Promise((resolve, reject) => {
                 setTimeout(resolve, t);
             })
         }
-
+        // 手动控制
         function happen(el, event) {
             return new Promise((resolve, reject) => {
                 el.addEventListener(event, resolve, { once: true })
             })
         }
+        // 自动执行
         async function autoGo() {
             while (true) {
                 changeStatus('green');
@@ -69,6 +71,7 @@
                 await sleep(500);
             }
         }
+        // 手动执行
         async function manualGo() {
             while (true) {
                 changeStatus('green');
