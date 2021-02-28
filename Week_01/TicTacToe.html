@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TicTacToe</title>
+</head>
+
+<body>
+    <style>
+        .cell {
+            width: 100px;
+            height: 100px;
+            background-color: indianred;
+            display: inline-block;
+            border: 1px solid white;
+            vertical-align: middle;
+            line-height: 100px;
+            font-size: 50px;
+            text-align: center;
+        }
+    </style>
+
+    <div id="board"></div>
+
+    <script>
+        let pattern = [
+            [0, 2, 0],
+            [0, 1, 0],
+            [0, 0, 0],
+        ];
+        // 2 => ❌ 1 => ⭕️
+
+        // 下一个添加的棋子
+        let color = 1;
+        function show() {
+            let board = document.getElementById("board");
+            // 清空重新创建
+            board.innerHTML = "";
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    let cell = document.createElement("div");
+                    // 添加类名
+                    cell.classList.add("cell");
+                    cell.innerText =
+                        pattern[i][j] === 2 ? "❌" : pattern[i][j] === 1 ? "⭕️" : "";
+                    cell.addEventListener("click", () => move(j, i));
+                    board.appendChild(cell);
+                }
+                board.appendChild(document.createElement("br"));
+            }
+        }
+
+        function move(x, y) {
+            // 设置棋盘中的棋子
+            pattern[y][x] = color;
+
+            if (check(pattern, color)) {
+                //检测是否有一方获胜
+                alert(color === 2 ? "❌ is winner" : "⭕️ is winner");
+            }
+            // 切换棋子
+            color = 3 - color;
+
+            // 对方每下一个子后，判断己方是否能赢
+            console.log(bestChoice(pattern, color));
+            show(); // 重新生成board
+            if (willWin(pattern, color)) {
+                console.log(color === 2 ? "❌ will win!" : "⭕️ will win!");
+            }
+        }
+
+        // 校验是否赢了
+        function check(pattern, color) {
+            // 行，是否全等
+            for (let i = 0; i < 3; i++) {
+                let win = true;
+                for (let j = 0; j < 3; j++) {
+                    if (pattern[i][j] !== color) {
+                        win = false;
+                    }
+                }
+                if (win) return win;
+            }
+            // 列，是否全等
+            for (i = 0; i < 3; i++) {
+                let win = true;
+                for (let j = 0; j < 3; j++) {
+                    if (pattern[j][i] !== color) {
+                        win = false;
+                    }
+                }
+                if (win) return true;
+            }
+            // 右对角线，是否全等
+            {
+                let win = true;
+                for (let j = 0; j < 3; j++) {
+                    if (pattern[j][2 - j] !== color) {
+                        win = false;
+                    }
+                }
+                if (win) return true;
+            }
+            // 左对角线是否全等
+            {
+                let win = true;
+                for (let j = 0; j < 3; j++) {
+                    if (pattern[j][j] !== color) {
+                        win = false;
+                    }
+                }
+                if (win) return true;
+            }
+        }
+
+        // 深拷贝
+        function cloneDeep(pattern) {
+            return JSON.parse(JSON.stringify(pattern));
+        }
+
+        // 判断是否赢
+        function willWin(pattern, color) {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    // 不为空，跳过
+                    if (pattern[i][j]) continue; 
+                    let temp = cloneDeep(pattern); 
+                    // 每个为空的位置，check是否获胜
+                    temp[i][j] = color; 
+                    if (check(temp, color)) {
+                        return [j, i];
+                    }
+                }
+            }
+            // 模拟后，下一步不能赢
+            return null;
+        }
+
+        // 最优选择
+        function bestChoice(pattern, color) {
+            let p;
+            // 下一步是否能赢
+            if (p = willWin(pattern, color)) {
+                return {
+                    point: p,
+                    result: 1,
+                };
+            }
+
+            let result = -2,
+                point = null;
+
+            // 遍历每一步，各种走法，递归直到游戏结束
+            outer: for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (pattern[i][j]) continue;
+                    let temp = cloneDeep(pattern);
+                    temp[i][j] = color;
+
+                    let r = bestChoice(temp, 3 - color).result;
+
+                    if (-r > result) {
+                        result = -r;
+                        point = [j, i];
+                        // 胜负剪枝，计算出可以获胜的走法之后，就不再继续计算
+                        if (result === 1) {
+                            // 退出到外层循环
+                            break outer;
+                        }
+                    }
+                }
+            }
+            return {
+                point,
+                result: point ? result : 0,
+            };
+        }
+        show(pattern);
+    </script>
+</body>
+
+</html>

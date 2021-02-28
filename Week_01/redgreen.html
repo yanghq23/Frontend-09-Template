@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>redgreen</title>
+</head>
+
+<body>
+    <style>
+        div {
+            background-color: gray;
+            display: inline-block;
+            margin: 30px;
+            width: 100px;
+            height: 100px;
+            border-radius: 50px;
+        }
+
+        .green.light {
+            background-color: green;
+        }
+
+        .yellow.light {
+            background-color: yellow;
+        }
+
+        .red.light {
+            background-color: red;
+        }
+    </style>
+
+    <div class="green"></div>
+    <div class="yellow"></div>
+    <div class="red"></div>
+    <button id="auto" onclick="autoGo()">auto go</button>
+
+    <button id="manul" onclick="manualGo()">manual go</button>
+    <button id="next">next</button>
+    <script>
+        function changeStatus(name) {
+            var lights = document.getElementsByTagName('div');
+
+            for (var i = 0; i < lights.length; i++)
+                lights[i].classList.remove('light')
+
+            document.getElementsByClassName(name)[0]?.classList.add('light')
+        }
+
+        function sleep(t) {
+            return new Promise((resolve, reject) => {
+                setTimeout(resolve, t);
+            })
+        }
+
+        function happen(el, event) {
+            return new Promise((resolve, reject) => {
+                el.addEventListener(event, resolve, { once: true })
+            })
+        }
+        async function autoGo() {
+            while (true) {
+                changeStatus('green');
+                await sleep(1000);
+                changeStatus('yellow');
+                await sleep(200);
+                changeStatus('red');
+                await sleep(500);
+            }
+        }
+        async function manualGo() {
+            while (true) {
+                changeStatus('green');
+                await happen(document.getElementById('next'), 'click');
+                changeStatus('yellow');
+                await happen(document.getElementById('next'), 'click');
+                changeStatus('red');
+                await happen(document.getElementById('next'), 'click');
+            }
+        }
+
+        //generator
+        function* go() {
+            while (true) {
+                changeStatus('green');
+                yield sleep(1000);
+                changeStatus('yellow');
+                yield sleep(200);
+                changeStatus('red');
+                yield sleep(500);
+            }
+        }
+
+        function run(iterator) {
+            let { value, done } = iterator.next();
+            if (done) return;
+            if (value instanceof Promise)
+                value.then(() => {
+                    run(iterator)
+                })
+        }
+
+        function co(generator) {
+            return function () {
+                run(generator());
+            }
+        }
+        go = co(go);
+    </script>
+</body>
+
+</html>
