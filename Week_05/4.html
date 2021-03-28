@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <input id="r" type="range" max="255" />
+    <input id="g" type="range" max="255" />
+    <input id="b" type="range" max="255" />
+
+    <div id="color" style="width: 200px; height: 200px"></div>
+    <script>
+      let callbacks = new Map();
+      let reactiveties = new Map();
+      let userReactivetise = [];
+
+      let object = {
+        r: 1,
+        g: 2,
+        b: 3,
+      };
+
+      let po = relative(object);
+
+      effect(() => {
+        document.getElementById("r").value = po.r;
+      });
+      effect(() => {
+        document.getElementById("g").value = po.g;
+      });
+      effect(() => {
+        document.getElementById("b").value = po.b;
+      });
+
+      document.getElementById("r").addEventListener("input", (event) => {
+        po.r = event.target.value;
+      });
+      document.getElementById("g").addEventListener("input", (event) => {
+        po.g = event.target.value;
+      });
+      document.getElementById("b").addEventListener("input", (event) => {
+        po.b = event.target.value;
+      });
+
+      effect(() => {
+        document.getElementById(
+          "color"
+        ).style.backgroundColor = `rgb(${po.r},${po.g},${po.b})`;
+      });
+
+      function effect(callback) {
+        userReactivetise = [];
+        callback();
+
+        for (let reactivetise of userReactivetise) {
+          if (!callbacks.has(reactivetise[0])) {
+            callbacks.set(reactivetise[0], new Map());
+          }
+          if (!callbacks.get(reactivetise[0]).has(reactivetise[1])) {
+            callbacks.get(reactivetise[0]).set(reactivetise[1], []);
+          }
+          callbacks.get(reactivetise[0]).get(reactivetise[1]).push(callback);
+        }
+      }
+
+      function relative(object) {
+        if (reactiveties.has(object)) return reactiveties.get(object);
+        let proxy = new Proxy(object, {
+          set(obj, prop, val) {
+            obj[prop] = val;
+
+            if (callbacks.get(obj)) {
+              if (callbacks.get(obj).get(prop)) {
+                for (let callback of callbacks.get(obj).get(prop)) {
+                  callback();
+                }
+              }
+            }
+
+            return obj[prop];
+          },
+          get(obj, prop) {
+            userReactivetise.push([obj, prop]);
+
+            if (typeof obj[prop] === "object") return relative(obj[prop]);
+            return obj[prop];
+          },
+        });
+
+        reactiveties.set(object, proxy);
+        return proxy;
+      }
+    </script>
+  </body>
+</html>
