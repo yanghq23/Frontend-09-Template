@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realm</title>
+</head>
+
+<body>
+    <div id="container"></div>
+    <script src="https://gw.alipayobjects.com/os/antv/pkg/_antv.g6-3.7.1/dist/g6.min.js"></script>
+    <script>
+        const
+            nodes = [
+                "Object",
+                "String",
+                "Number",
+                "Array",
+                "Boolean",
+                "Date",
+                "Function",
+                "Error",
+                "Promise",
+                "Proxy",
+                "Symbol",
+                "RegExp",
+                "Map",
+                "WeakMap",
+                "Set",
+                "WeakSet",
+            ];
+
+        var childMap = new Map();
+        childMap.set("Error", [
+            "SyntaxError",
+            "TypeError",
+            "ReferenceError",
+            "URIError",
+            "EvalError",
+            "RangeError"
+        ]);
+
+        childMap.set("Array", [
+            "Float32Array",
+            "Float64Array",
+            "Int8Array",
+            "Int16Array",
+            "Int32Array",
+            "UInt8Array",
+            "UInt16Array",
+            "UInt32Array",
+            "UInt8ClampedArray"
+        ]);
+
+        const container = document.getElementById('container');
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const graph = new G6.TreeGraph({
+            container: 'container',
+            width,
+            height,
+            linkCenter: true,
+            modes: {
+                default: [
+                    {
+                        type: 'collapse-expand',
+                        onChange: function onChange(item, collapsed) {
+                            const data = item.get('model');
+                            data.collapsed = collapsed;
+                            return true;
+                        },
+                    },
+                    'drag-canvas',
+                    'zoom-canvas',
+                ],
+            },
+            defaultNode: {
+                size: 26,
+                anchorPoints: [
+                    [0, 0.5],
+                    [1, 0.5],
+                ],
+            },
+            defaultEdge: {
+                type: 'cubic-vertical',
+            },
+            layout: {
+                type: 'dendrogram',
+                direction: 'TB',
+                nodeSep: 40,
+                rankSep: 100,
+            },
+        });
+
+        graph.node(function (node) {
+            let position = 'right';
+            let rotate = 0;
+            if (!node.children) {
+                position = 'bottom';
+                rotate = Math.PI / 2;
+            }
+            return {
+                label: node.id,
+                labelCfg: {
+                    position,
+                    offset: 5,
+                    style: {
+                        rotate,
+                        textAlign: 'start',
+                    },
+                },
+            };
+        });
+
+
+
+        const getJsonData = (data) => {
+            let jsonData = {
+                id: "AllObject",
+                label: "AllObject",
+                type: "rect",
+                children: []
+            };
+            data.forEach((item) => {
+                let node = {
+                    "id": item,
+                    "label": item,
+                }
+                if (childMap.has(item)) {
+                    let childs = childMap.get(item)
+                    let children = []
+                    childs.forEach((child) => {
+                        children.push({
+                            "id": child,
+                            "label": child,
+                        })
+                    })
+                    node.children = children
+                }
+                jsonData.children.push(node)
+            })
+            return jsonData
+        }
+
+        const main = async () => {
+            graph.data(getJsonData(nodes));
+            graph.render();
+            graph.fitView();
+        };
+        main();
+    </script>
+</body>
+
+</html>
